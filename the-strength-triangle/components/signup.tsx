@@ -1,30 +1,29 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
-import { MongoClient } from 'mongodb';
 
 export const Signup: React.FC = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
 
     const handleSignup = async () => {
-        const uri = "mongodb+srv://majadomalewska:thestrengthtriangle@thestrengthtriangle.xibbo.mongodb.net/?retryWrites=true&w=majority&appName=TheStrengthTriangle"; 
-        const client = new MongoClient(uri);
-
         try {
-            await client.connect();
-            const database = client.db('strength_triangle');
-            const usersCollection = database.collection('users');
+            const response = await fetch('http://localhost:3000/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
 
-            // Insert the user into the database
-            const result = await usersCollection.insertOne({ email, password });
-            if (result.acknowledged) {
+            const result = await response.json();
+            if (result.success) {
                 Alert.alert("Signup Successful", "You have successfully signed up!");
+            } else {
+                Alert.alert("Signup Failed", "An error occurred during signup.");
             }
         } catch (error) {
             console.error("Error during signup:", error);
             Alert.alert("Signup Failed", "An error occurred during signup.");
-        } finally {
-            await client.close();
         }
     };
 
@@ -33,7 +32,7 @@ export const Signup: React.FC = () => {
             <TextInput
                 style={styles.textInput}
                 placeholder="Email"
-                onChangeText={newText => setEmail(newText)}
+                onChangeText={setEmail}
                 value={email}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -41,14 +40,11 @@ export const Signup: React.FC = () => {
             <TextInput
                 style={styles.textInput}
                 placeholder="Password"
-                onChangeText={newText => setPassword(newText)}
+                onChangeText={setPassword}
                 value={password}
                 secureTextEntry
             />
             <Button title="Sign Up" onPress={handleSignup} />
-            <Text style={styles.text}>
-                {email.split("").join("")}
-            </Text>
         </View>
     );
 };

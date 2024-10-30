@@ -1,74 +1,67 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import React, { useState } from 'react';
+import client from '@/db';
 
-export const Signup: React.FC = () => {
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
+const AuthComponent: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLogin, setIsLogin] = useState(true);
 
-    const handleSignup = async () => {
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+
         try {
-            const response = await fetch('http://localhost:3000/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
+            await client.connect();
 
-            const result = await response.json();
-            if (result.success) {
-                Alert.alert("Signup Successful", "You have successfully signed up!");
+            const db = client.db('strength_triangle');
+
+            if (isLogin) {
+                // Login logic
+                const user = await db.collection('users').findOne({ email, password });
+                if (user) {
+                    console.log('Login successful!', user);
+                } else {
+                    console.log('Login failed: Invalid credentials');
+                }
             } else {
-                Alert.alert("Signup Failed", "An error occurred during signup.");
+                const existingUser = await db.collection('users').findOne({ email });
+                if (existingUser) {
+                    console.log('Signup failed: User already exists');
+                } else {
+                    await db.collection('users').insertOne({ email, password });
+                    console.log('Signup successful!');
+                }
             }
-        } catch (error) {
-            console.error("Error during signup:", error);
-            Alert.alert("Signup Failed", "An error occurred during signup.");
+        } catch (err) {
+            console.error('Error during database operation:', err);
+        } finally {
+            await client.close();
         }
     };
 
     return (
-        <View style={styles.container}>
-            <TextInput
-                style={styles.textInput}
-                placeholder="Email"
-                onChangeText={setEmail}
-                value={email}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={styles.textInput}
-                placeholder="Password"
-                onChangeText={setPassword}
-                value={password}
-                secureTextEntry
-            />
-            <Button title="Sign Up" onPress={handleSignup} />
-        </View>
+        <div>
+            <form onSubmit={handleSubmit}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
+                <button type="submit">{isLogin ? 'Login' : 'Signup'}</button>
+            </form>
+            <button onClick={() => setIsLogin(!isLogin)}>
+                Switch to {isLogin ? 'Signup' : 'Login'}
+            </button>
+        </div>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 16,
-        backgroundColor: '#25292e',
-    },
-    textInput: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        marginBottom: 12,
-        paddingHorizontal: 10,
-        backgroundColor: '#fff',
-    },
-    text: {
-        fontSize: 20,
-        textDecorationLine: 'underline',
-        color: '#fff',
-    },
-});
-
-export default Signup;
+export default AuthComponent;

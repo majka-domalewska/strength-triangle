@@ -1,11 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Signup from '@/components/signup';
+import TestAsync from '@/components/await_test';
 
 const App: React.FC = () => {
     return (
         <View style={styles.container}>
-            <Signup />
+            <TestAsync />
         </View>
     );
 };

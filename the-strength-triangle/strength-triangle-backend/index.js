@@ -16,20 +16,17 @@ app.post('/signup', async (req, res) => {
     try {
         await client.connect();
         const database = client.db('strength_triangle');
-        const usersCollection = database.collection('users');
+        const collection = database.collection('users');
         
-        const result = await usersCollection.insertOne({ email, password });
+        const result = await collection.insertOne({ email, password });
         res.status(200).json({ success: result.acknowledged });
+        console.log(result);
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     } finally {
         await client.close();
     }
 });
-
-const result = await response.json();
-console.log(result);  // Logs the server response
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
